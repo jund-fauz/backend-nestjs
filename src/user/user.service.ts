@@ -45,7 +45,8 @@ export class UserService {
       if (!user) {
           throw new UnauthorizedException('User not found');
       }
-      if (!(await compare(password, user.password))) {
+      const passwordTrue = await compare(password, user.password);
+      if (!passwordTrue) {
           throw new UnauthorizedException('Incorrect password');
       }
       const token = this.jwtService.sign({ id: user._id });

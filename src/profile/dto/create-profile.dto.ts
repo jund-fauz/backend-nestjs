@@ -1,5 +1,5 @@
 import {
-    IsArray,
+  IsArray,
   IsDate,
   IsEmpty,
   IsEnum,
@@ -16,8 +16,8 @@ export class CreateProfileDto {
   @IsNotEmpty()
   @IsString()
   readonly name: string;
-  
-  @IsNotEmpty()
+
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   readonly interests: string[];

@@ -35,10 +35,7 @@ export const landscapeImageStorage = diskStorage({
 export const landscapeImageFileFilter = async (req, file, cb) => {
   // Check file size
   if (file.size > MAX_FILE_SIZE) {
-    return cb(
-      new BadRequestException('File size exceeds 5MB limit'),
-      false,
-    );
+    return cb(new BadRequestException('File size exceeds 5MB limit'), false);
   }
 
   // Check file format
@@ -56,10 +53,7 @@ export const landscapeImageFileFilter = async (req, file, cb) => {
     const metadata = await sharp(file.buffer).metadata();
     const aspectRatio = metadata.width / metadata.height;
 
-    if (
-      aspectRatio < MIN_ASPECT_RATIO ||
-      aspectRatio > MAX_ASPECT_RATIO
-    ) {
+    if (aspectRatio < MIN_ASPECT_RATIO || aspectRatio > MAX_ASPECT_RATIO) {
       return cb(
         new BadRequestException(
           `Image must be in landscape format. Required aspect ratio: ${MIN_ASPECT_RATIO}:1 to ${MAX_ASPECT_RATIO}:1, but got ${aspectRatio.toFixed(2)}:1`,
@@ -68,10 +62,7 @@ export const landscapeImageFileFilter = async (req, file, cb) => {
       );
     }
   } catch (error) {
-    return cb(
-      new BadRequestException('Invalid image file'),
-      false,
-    );
+    return cb(new BadRequestException('Invalid image file'), false);
   }
 
   cb(null, true);

@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsDate,
   IsEmpty,
   IsEnum,
@@ -8,7 +9,7 @@ import {
 } from 'class-validator';
 import { Gender } from '../schemas/profile.schema';
 import { User } from 'src/user/schemas/user.schema';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -31,6 +32,21 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsNumber()
   readonly weight: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return value;
+      }
+    }
+    return value;
+  })
+  readonly interests: string[];
 
   @IsOptional()
   @IsString()

@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Post, Put, Req, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Req,
+  UseGuards,
+  UseInterceptors,
+  UploadedFile,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ProfileService } from './profile.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
@@ -19,7 +29,7 @@ export class ProfileController {
   ) {
     return this.profileService.createProfile(createProfileDto, req.user, file);
   }
-  
+
   @Get('getProfile')
   async getProfile(@Req() req) {
     return this.profileService.getProfile(req.user);

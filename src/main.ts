@@ -14,6 +14,7 @@ async function bootstrap() {
       forbidUnknownValues: true,
     }),
   );
+  app.enableCors()
 
   // Serve static files for profile pictures
   app.useStaticAssets(path.join(__dirname, '..', 'uploads'), {

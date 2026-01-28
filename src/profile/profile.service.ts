@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Horoscope, Profile, Zodiac } from './schemas/profile.schema';
 import { Model } from 'mongoose';
@@ -16,7 +20,11 @@ export class ProfileService {
     @InjectModel(Profile.name) private profileModel: Model<Profile>,
   ) {}
 
-  async createProfile(createProfileDto: CreateProfileDto, user: User, file?: Express.Multer.File) {
+  async createProfile(
+    createProfileDto: CreateProfileDto,
+    user: User,
+    file?: Express.Multer.File,
+  ) {
     const existingProfile = await this.profileModel.findOne({ user: user._id });
     if (existingProfile) {
       throw new BadRequestException('Profile already exists for this user');
@@ -39,7 +47,11 @@ export class ProfileService {
     return { message: 'Profile has been created successfully', data: profile };
   }
 
-  async updateProfile(updateProfileDto: UpdateProfileDto, user: User, file?: Express.Multer.File) {
+  async updateProfile(
+    updateProfileDto: UpdateProfileDto,
+    user: User,
+    file?: Express.Multer.File,
+  ) {
     const existingProfile = await this.profileModel.findOne({ user: user._id });
     if (!existingProfile) {
       throw new NotFoundException('Profile does not exist for this user');
@@ -57,19 +69,32 @@ export class ProfileService {
     }
 
     const updateData: any = {
-      ...updateProfileDto,
       user: user._id,
     };
 
-    // Only update picture if a new file was uploaded or new URL provided
-    if (profilePictureUrl) {
-      updateData.profilePictureUrl = profilePictureUrl;
+    // Build update data with only provided fields
+    if (updateProfileDto.name !== undefined) {
+      updateData.name = updateProfileDto.name;
     }
-
-    // Only update horoscope and zodiac if birthday was provided
-    if (updateProfileDto.birthday) {
+    if (updateProfileDto.gender !== undefined) {
+      updateData.gender = updateProfileDto.gender;
+    }
+    if (updateProfileDto.birthday !== undefined) {
+      updateData.birthday = updateProfileDto.birthday;
       updateData.horoscope = this.getHoroscope(updateProfileDto.birthday);
       updateData.zodiac = this.getZodiac(updateProfileDto.birthday);
+    }
+    if (updateProfileDto.height !== undefined) {
+      updateData.height = updateProfileDto.height;
+    }
+    if (updateProfileDto.weight !== undefined) {
+      updateData.weight = updateProfileDto.weight;
+    }
+    if (updateProfileDto.interests !== undefined) {
+      updateData.interests = updateProfileDto.interests;
+    }
+    if (profilePictureUrl) {
+      updateData.profilePictureUrl = profilePictureUrl;
     }
 
     const updatedProfile = await this.profileModel.findOneAndUpdate(
