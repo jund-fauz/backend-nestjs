@@ -36,6 +36,9 @@ export class UpdateProfileDto {
   @IsString()
   readonly profilePictureUrl: string;
 
+  @IsOptional()
+  profilePicture?: Express.Multer.File;
+
   @IsEmpty()
   readonly user: User;
 }

@@ -5,20 +5,33 @@ import { Model } from 'mongoose';
 import { User } from 'src/user/schemas/user.schema';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class ProfileService {
+  private readonly uploadsFolder = 'uploads/profiles';
+
   constructor(
     @InjectModel(Profile.name) private profileModel: Model<Profile>,
   ) {}
 
-  async createProfile(createProfileDto: CreateProfileDto, user: User) {
+  async createProfile(createProfileDto: CreateProfileDto, user: User, file?: Express.Multer.File) {
     const existingProfile = await this.profileModel.findOne({ user: user._id });
     if (existingProfile) {
       throw new BadRequestException('Profile already exists for this user');
     }
+
+    let profilePictureUrl = createProfileDto.profilePictureUrl;
+
+    // Handle file upload
+    if (file) {
+      profilePictureUrl = `/uploads/profiles/${file.filename}`;
+    }
+
     const profile = await this.profileModel.create({
       ...createProfileDto,
+      profilePictureUrl,
       user: user._id,
       horoscope: this.getHoroscope(createProfileDto.birthday),
       zodiac: this.getZodiac(createProfileDto.birthday),
@@ -26,25 +39,49 @@ export class ProfileService {
     return { message: 'Profile has been created successfully', data: profile };
   }
 
-  async updateProfile(updateProfileDto: UpdateProfileDto, user: User) {
+  async updateProfile(updateProfileDto: UpdateProfileDto, user: User, file?: Express.Multer.File) {
     const existingProfile = await this.profileModel.findOne({ user: user._id });
     if (!existingProfile) {
       throw new NotFoundException('Profile does not exist for this user');
     }
+
+    let profilePictureUrl = updateProfileDto.profilePictureUrl;
+
+    // Handle file upload - delete old file if new one is uploaded
+    if (file) {
+      // Delete old picture if exists
+      if (existingProfile.profilePictureUrl) {
+        this.deleteOldProfilePicture(existingProfile.profilePictureUrl);
+      }
+      profilePictureUrl = `/uploads/profiles/${file.filename}`;
+    }
+
+    const updateData: any = {
+      ...updateProfileDto,
+      user: user._id,
+    };
+
+    // Only update picture if a new file was uploaded or new URL provided
+    if (profilePictureUrl) {
+      updateData.profilePictureUrl = profilePictureUrl;
+    }
+
+    // Only update horoscope and zodiac if birthday was provided
+    if (updateProfileDto.birthday) {
+      updateData.horoscope = this.getHoroscope(updateProfileDto.birthday);
+      updateData.zodiac = this.getZodiac(updateProfileDto.birthday);
+    }
+
     const updatedProfile = await this.profileModel.findOneAndUpdate(
-        { user: user._id },
-        {
-          ...updateProfileDto,
-          user: user._id,
-          horoscope: this.getHoroscope(updateProfileDto.birthday),
-          zodiac: this.getZodiac(updateProfileDto.birthday),
-        },
-        { new: true },
-      );
-      return {
-        message: 'Profile has been updated successfully',
-        data: updatedProfile,
-      };
+      { user: user._id },
+      updateData,
+      { new: true },
+    );
+
+    return {
+      message: 'Profile has been updated successfully',
+      data: updatedProfile,
+    };
   }
 
   async getProfile(user: User) {
@@ -52,6 +89,19 @@ export class ProfileService {
       .findOne({ user: user._id })
       .populate('user', '-password -_id');
     return { message: 'Profile has been found successfully', data: profile };
+  }
+
+  private deleteOldProfilePicture(picturePath: string) {
+    try {
+      // Extract filename from URL path (e.g., /uploads/profiles/filename -> filename)
+      const fileName = path.basename(picturePath);
+      const filePath = path.join(this.uploadsFolder, fileName);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    } catch (error) {
+      console.error('Error deleting old profile picture:', error);
+    }
   }
 
   getHoroscope(birthDate: Date): Horoscope {

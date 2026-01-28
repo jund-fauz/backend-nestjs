@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Post, Put, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Req, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ProfileService } from './profile.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { LandscapeImageUploadInterceptor } from './interceptors/landscape-image-upload.interceptor';
 
 @Controller('api')
 @UseGuards(AuthGuard())
@@ -10,8 +11,13 @@ export class ProfileController {
   constructor(private profileService: ProfileService) {}
 
   @Post('createProfile')
-  async createProfile(@Body() createProfileDto: CreateProfileDto, @Req() req) {
-    return this.profileService.createProfile(createProfileDto, req.user);
+  @UseInterceptors(LandscapeImageUploadInterceptor())
+  async createProfile(
+    @Body() createProfileDto: CreateProfileDto,
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req,
+  ) {
+    return this.profileService.createProfile(createProfileDto, req.user, file);
   }
   
   @Get('getProfile')
@@ -20,7 +26,12 @@ export class ProfileController {
   }
 
   @Put('updateProfile')
-  async updateProfile(@Body() updateProfileDto: UpdateProfileDto, @Req() req) {
-    return this.profileService.updateProfile(updateProfileDto, req.user);
+  @UseInterceptors(LandscapeImageUploadInterceptor())
+  async updateProfile(
+    @Body() updateProfileDto: UpdateProfileDto,
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req,
+  ) {
+    return this.profileService.updateProfile(updateProfileDto, req.user, file);
   }
 }
